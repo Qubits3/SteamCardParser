@@ -1,66 +1,95 @@
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Parser {
 
     final static String URL = "https://steam.tools/cards/#";
 
-    static String fullURL;
+    static String fullHTML;
+
+    private static ArrayList<String> cardLinks = new ArrayList<>();
+    private static ArrayList<String> steamLinks = new ArrayList<>();
+
+    private static SteamPriceParser steamPriceParser;
 
     public static void main(String[] args) throws IOException {
-        headlessChrome();   // Get the full HTML
-
-//        getMain();
-        selectTable();
-
+        headlessChrome();
 
     }
 
-    private static void headlessChrome() {
+    private static void headlessChrome() throws IOException {
         System.setProperty("webdriver.chrome.driver", "D:\\ReferencedLibraries\\chromedriver.exe");
 
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--headless");
         options.addArguments("--disable-gpu");
+        options.addArguments("disable-blink-features=AutomationControlled");
         options.addArguments("--window-size=1400,800");
 
         WebDriver driver = new ChromeDriver(options);
         driver.get(URL);
 
-        fullURL = driver.getPageSource();
+//        WebElement menu = driver.findElement(By.className("dropdown-menu"));
+//        WebElement link = menu.findElement(By.cssSelector("a"));
+//        System.out.println(link);
+
+//        List<WebElement> button = driver.findElements(By.xpath("//*[contains(text(), 'TRY')]"));
+//
+//        JavascriptExecutor executor = (JavascriptExecutor) driver;
+//        executor.executeScript("setCurrency(0)", button.get(0));
+
+//        WebElement button = driver.findElement(By.linkText("TRY"));
+
+//        System.out.println(button);
+
+//        webElement.click();
+
+//        WebElement element = driver.findElement(By.xpath("//section[@class='dropdown-menu']"));
+//        System.out.println(element);
+
+        fullHTML = driver.getPageSource();
+
+//        System.out.println(fullURL);
+
+        selectTable();
+
+        driver.close();
     }
 
-    private static void getMain() throws IOException {
-        Document doc = Jsoup.connect("https://steam.tools/cards/#").get();
-
-        System.out.println(doc);
-
-        Elements elements = doc.select("tbody");
-
-        for (Element e : elements) {
-            System.out.println(e);
-        }
-    }
-
-    private static void selectTable() throws IOException {
-//        Document doc = Jsoup.connect("https://steam.tools/cards/#").maxBodySize(0).timeout(0).followRedirects(true).get();
-
-        Document doc = Jsoup.parse(fullURL);
+    private static void selectTable() {
+        Document doc = Jsoup.parse(fullHTML);
         Elements table = doc.select("#set_table");
 
-        System.out.println(table);
+//        System.out.println(table);
 
-        Elements rows = table.get(0).select("tr");
+        String[] tempLinks = table.select("a[href]")
+                .toString()
+                .split("</a>");
 
-        for (Element row : rows) {
-            System.out.println(row.select("td").get(0).text());
+        for (String link : tempLinks) {
+            if (link.contains("[M]")) {  // card links
+                cardLinks.add(link.substring(link.indexOf("\"") + 1, link.indexOf(" target=\"_blank\">[M]") - 1));
+            }
+
+            if (link.contains("[S]")) {
+                steamLinks.add(link.substring(link.indexOf("\"") + 1, link.indexOf(" target=\"_blank\">[S]") - 1));
+            }
+        }
+
+        steamPriceParser = new SteamPriceParser(steamLinks);
+
+    }
+
+    private static void printArray(ArrayList<String> arrayList) {
+        for (String x : arrayList) {
+            System.out.println(x);
         }
     }
 
