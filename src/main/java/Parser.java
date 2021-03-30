@@ -30,7 +30,6 @@ public class Parser {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--headless");
         options.addArguments("--disable-gpu");
-        options.addArguments("disable-blink-features=AutomationControlled");
         options.addArguments("--window-size=1400,800");
 
         WebDriver driver = new ChromeDriver(options);
@@ -61,6 +60,7 @@ public class Parser {
         selectTable();
 
         driver.close();
+        driver.quit();
     }
 
     private static void selectTable() {
@@ -83,6 +83,7 @@ public class Parser {
             }
         }
 
+        printArray(steamLinks);
         steamPriceParser = new SteamPriceParser(steamLinks);
 
     }
